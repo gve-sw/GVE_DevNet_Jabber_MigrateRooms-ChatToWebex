@@ -1,6 +1,13 @@
 # GVE_DevNet_Jabber_Migrate_Rooms_Chat_To_Webex
 This code is built to show the ability to migrate Cisco Jabber's persistent chat and rooms to Webex. This is for environment with [Persistent Chat Rooms](https://www.cisco.com/c/en/us/td/docs/voice_ip_comm/jabber/12_8/cjab_b_feature-configuration-for-jabber-128/cjab_b_feature-configuration-for-jabber-128_chapter_010.html#CJAB_RF_P5B96C5D_00) are enabled. It will use read-only access to the [External Databases](https://www.cisco.com/c/en/us/td/docs/voice_ip_comm/cucm/im_presence/database_setup/12_5_1/cup0_b_database-setup-guide-1251su2/cup0_mp_edff2920_00_external-database-tables.html) configured for Jabber, read the list of rooms, users, and messages, then posts them to Webex using [Webex APIs](https://developer.webex.com/docs/api/getting-started).
 
+![/IMAGES/overview_1.png](/IMAGES/overview_1.png)
+
+### High-level Overview
+
+![/IMAGES/overview_2.png](/IMAGES/overview_2.png)
+
+A video showing a sample run of this prototype: [https://youtu.be/4xJe8KsRjZs](https://youtu.be/4xJe8KsRjZs)
 
 ## Contacts
 * Rami Alfadel (ralfadel@cisco.com)
@@ -124,6 +131,8 @@ This code is built to show the ability to migrate Cisco Jabber's persistent chat
 # Screenshots
 A sample of a migrated message from Jabber to Webex that was [formatted with Markdown](https://developer.webex.com/docs/api/basics#formatting-messages):
 ![/IMAGES/sample_archived_message.png](/IMAGES/sample_archived_message.png)
+
+![/IMAGES/overview_3.png](/IMAGES/overview_3.png)
 
 ### LICENSE
 
