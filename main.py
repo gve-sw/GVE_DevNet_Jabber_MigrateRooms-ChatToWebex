@@ -645,7 +645,7 @@ def webex_api_post_msg_with_attachment_to_room(w_room_id, j_msg_sender_id, j_msg
     msg_txt_content = "(Archived message with attachment)\n**From: <@personEmail:" + \
         j_msg_sender_id + ">**\t```at: " + j_msg_sent_date + "```\n" + attachment_text
     payload = MultipartEncoder({'roomId': w_room_id, 'markdown': msg_txt_content, 'files': (
-        file_path, open(file_path, 'rb'))})
+        file_path, open(file_path, 'rb'), 'application/octet-stream')})
 
     url = "https://webexapis.com/v1/messages"
     headers = {
