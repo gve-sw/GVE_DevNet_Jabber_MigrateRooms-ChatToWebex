@@ -55,7 +55,7 @@ FILE_SERVER_PASSWORD = '<password_here>'
 
 # This boolean variable is to choose to migrate the detected Jabber rooms to Webex (True),
 # or just use this script to read the existing Jabber rooms and their details and save them in a log (False)
-CREATE_WEBEX_ROOMS = False
+CREATE_WEBEX_ROOMS = True
 
 # This boolean variable is to choose to check for already-existing Webex rooms that have the same title as the detected Jabber room,
 # then ask the user if they want to skip it (to avoid duplicates) or migrate it to new room anyway (True)
@@ -65,6 +65,10 @@ CHECK_WEBEX_EXISTING_ROOMS = False
 # Webex Authorization
 # Only if CREATE_WEBEX_ROOMS was set to True
 WEBEX_AUTH = 'Bearer <webex_user_token>'
+
+# Do you have an Excel file that maps Jabber usernames to Webex emails?
+INCLUDE_JABBER_WEBEX_MAP = True
+
 
 # These 2 variables are only needed if Jabber IM messaging uses a different domain than Webex domain.
 # Example: In dCloud environment, Jabber IM uses @dcloud.cisco.com while Webex environment uses @cbXXX.dc-YY.com
@@ -78,4 +82,3 @@ LOGS_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '\\Logs\\'
 # Folder to store the files being transferred from Jabber's external file-server to Webex as attachments
 # If not changed: it will create a sub-folder of the current location called 'FileTransfer'
 LOCAL_FILE_TRANSFER_FOLDER = os.path.dirname(os.path.realpath(__file__)) + '\\FileTransfer\\'
-

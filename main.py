@@ -21,6 +21,7 @@ import time
 import paramiko
 import logging
 import datetime
+import pandas as pd
 from pathlib import Path
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
@@ -32,7 +33,7 @@ from config import WEBEX_AUTH, CREATE_WEBEX_ROOMS, CHECK_WEBEX_EXISTING_ROOMS
 from config import INCLUDE_FILE_TRANSFER, FILE_SERVER_HOST, FILE_SERVER_USER, FILE_SERVER_PASSWORD
 
 # Importing Jabber domain and Webex domain, in case they are different
-from config import JABBER_DOMAIN, WEBEX_DOMAIN
+from config import INCLUDE_JABBER_WEBEX_MAP, JABBER_DOMAIN, WEBEX_DOMAIN
 
 # Setting up logging time to write new logs each time the script is run.
 now = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
@@ -72,6 +73,18 @@ tc_engine = create_engine(TC_DB_TYPE + '://' + TC_DB_USER +
 if(INCLUDE_FILE_TRANSFER):
     mft_engine = create_engine(MFT_DB_TYPE + '://' + MFT_DB_USER +
                             ':' + MFT_DB_PASSWORD + '@' + MFT_DB_HOST + '/' + MFT_DB_NAME)
+
+if INCLUDE_JABBER_WEBEX_MAP:
+    map_df = pd.read_excel("jabber_to_webex.xlsx")
+    num_rows = len(map_df)
+
+    map_dict = {}
+    for row in range(num_rows):
+        jabber_id = map_df.loc[row, "jabber_id"]
+        webex_email = map_df.loc[row, "webex_email"]
+        map_dict[jabber_id] = webex_email
+
+    print(map_dict)
 
 # Main function having the full script to read Jabber's persistent chat from External DB.
 # And create the rooms, with their list of users, and messaages to Webex using its APIs
@@ -118,6 +131,7 @@ def main():
 
     # Loop throught the list of rooms and treat each room separately
     num_of_rooms = 0
+  
     for j_room in jabber_rooms:
 
         num_of_rooms += 1
@@ -169,7 +183,6 @@ def main():
             # Resetting the list of users
             webex_room_users = []
             w_room_id = webex_api_create_room(j_room_title)
-
         # Boolean to choose if the archiver user needs to leave the room after everything
         # Changed to False after creating a seprate script to leave all the rooms (leave_webex_rooms.py)
         # Change to True to make the user leave directly after creating it and adding users & messages
@@ -178,26 +191,31 @@ def main():
         # Jabber Users #
         # Execute a query to get list of users in the current room
         jabber_room_users = conn.execute(
-            "SELECT real_jid, affiliation FROM tc_users where role='none' AND room_jid = '" + j_room_id + "'")
-
-        # Dealing with the list of users in the room one by one
+            "SELECT real_jid, affiliation FROM tc_users WHERE role!='moderator' AND room_jid='" + j_room_id +"'"
+        )
         logging.info('Users:')
         num_of_users = 0
         for j_user in jabber_room_users:
             num_of_users += 1
             j_user_id = str(j_user[0])
             j_user_affiliation = str(j_user[1])
-
+            if '/' in j_user_id:
+                j_user_id = j_user_id.split('/')
+                j_user_id = j_user_id[0]
+            
             logging.info('\t' + str(num_of_users) + '- ' + j_user_id +
                   '\taffiliation: ' + j_user_affiliation)
-
+        
             # Boolean variable 'isModerator' to be used in Webex API matching the role/affiliation in Jabber
             w_user_moderator = "false"
             if (j_user_affiliation == "admin" or j_user_affiliation == "owner"):
                 w_user_moderator = "true"
 
-            # This step is only needed if the domain of Jabber IM is different than Webex environment
-            j_user_id = j_user_id.replace(JABBER_DOMAIN, WEBEX_DOMAIN)
+            if INCLUDE_JABBER_WEBEX_MAP:
+                j_user_id = map_dict[j_user_id]
+            else:
+                # This step is only needed if the domain of Jabber IM is different than Webex environment
+                j_user_id = j_user_id.replace(JABBER_DOMAIN, WEBEX_DOMAIN)
 
             # Checking if the archiving user in Webex was already a user in the room in Jabber
             if(CREATE_WEBEX_ROOMS):
@@ -208,6 +226,7 @@ def main():
             # Add the users in the newly created Webex room
             if(CREATE_WEBEX_ROOMS):
                 webex_api_add_user_to_room(w_room_id, j_user_id, w_user_moderator)
+                print("adding user " + j_user_id + " to a room")
 
         # Jabber Messages #
         # Execute a query to read messages details in the room from tc_msgarchive table
@@ -227,9 +246,13 @@ def main():
             logging.info('\t' + str(num_of_msgs) + '- sent_date: ' +
                   j_msg_sent_date + '\t from_jid: ' + j_msg_sender_id + '\n\t\tbody_string: ' + j_msg_body)
 
-            # This step is only needed if the domain of Jabber IM is different than Webex environment
-            j_msg_sender_id = j_msg_sender_id.replace(
-                JABBER_DOMAIN, WEBEX_DOMAIN)
+            if INCLUDE_JABBER_WEBEX_MAP:
+                j_msg_sender_id = map_dict[j_msg_sender_id]
+            else:
+                # This step is only needed if the domain of Jabber IM is different than Webex environment
+                j_msg_sender_id = j_msg_sender_id.replace(
+                    JABBER_DOMAIN, WEBEX_DOMAIN)
+            
 
             # Trim the send_date to show only down to seconds, and match the managed file transfer DB's timing format
             j_msg_sent_date = j_msg_sent_date[0:19]
